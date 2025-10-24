@@ -100,3 +100,153 @@ console.log(
   run1 instanceof Workout,
   cycling1 instanceof Workout
 );
+
+// DOM ELEMENTS
+// main form element
+const form = document.querySelector('.form');
+// container workout list
+const containerWorkouts = document.querySelector('.workouts');
+// inputype
+const inputType = document.querySelector('.form__input--type');
+// input distance
+const inputDistance = document.querySelector('.form__input--distance');
+// input duration
+const inputDuration = document.querySelector('.form__input--duration');
+// input cadence
+const inputCadence = document.querySelector('.form__input--cadence');
+// input elevation
+const inputElevation = document.querySelector('.form__input--elevation');
+
+class App {
+  #map;
+  #mapZoomLevel = 13;
+  #mapEvent;
+  #workouts = [];
+
+  constructor() {
+    console.log('App is starting');
+    this._getPosition();
+    // attach event handlers for workout type change
+    inputType.addEventListener('change', this._toggleElevationField);
+  }
+
+  _getPosition() {
+    if (navigator.geolocation) {
+      console.log('🔍 Requesting user location...');
+      navigator.geolocation.getCurrentPosition(
+        this._loadMap.bind(this),
+        this._handleLocationError.bind(this),
+        {
+          timeout: 10000,
+          enableHighAccuracy: true,
+          maximumAge: 600000,
+        }
+      );
+    } else {
+      alert('❌ Geolocation is not supported by this browser');
+      this._loadDefaultMap();
+    }
+  }
+
+  _handleLocationError(error) {
+    console.error('Geolocation error:', error);
+
+    let message = 'Could not get your position. ';
+
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        message +=
+          'Location access was denied. Please enable location services and refresh the page.';
+        break;
+      case error.POSITION_UNAVAILABLE:
+        message += 'Location information is unavailable.';
+        break;
+      case error.TIMEOUT:
+        message += 'Location request timed out.';
+        break;
+      default:
+        message += 'An unknown error occurred.';
+        break;
+    }
+
+    alert(`📍 ${message}`);
+    this._loadDefaultMap();
+  }
+
+  _loadDefaultMap() {
+    console.log('Loading default map location (Home)');
+
+    // put the actual coordinates
+    const defaultCoords = [14.686, 121.083];
+
+    // from const map
+    // from 13 to this.#ZoomLevel
+    this.#map = L.map('map').setView(defaultCoords, this.#mapZoomLevel);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://{s}.tile.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(this.#map);
+
+    this.#map.on('click', this._showForm.bind(this));
+
+    console.log('Default map loaded successfully');
+  }
+
+  _loadMap() {
+    // extract coordinates from the geolocation API
+    const { latitude, longitude } = position.coords;
+    // test loading map
+    console.log(`Your current location: ${latitude}, ${longitude}`);
+
+    //IMPORTANT PART
+    // coordinate array for leaflet
+    const coords = [latitude, longitude];
+
+    // initialize the map and set its view to the user's location
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
+
+    // add openstreetmap
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://{s}.tile.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(this.#map);
+
+    // add a marker blue
+    L.marker(coords).addTo(this.#map).bindPopup('📍 You are here').openPopup();
+
+    // new map event listener
+    this.#map.on('click', this._showForm.bind(this));
+
+    console.log('Map loaded successfully at user location');
+  }
+
+  _showForm(mapE) {
+    this.#mapEvent = mapE;
+    form.classList.remove('hidden');
+    inputDistance.focus();
+  }
+
+  _toggleElevationField() {
+    // turns on or display the elevation
+    inputElevation.closest('.form_row').classList.toggle('form__row--hidden');
+    // turns off or hide the input cadence
+    inputCadence.closest('.form_row').classList.toggle('form__row--hidden');
+  }
+
+  _hideform() {
+    inputDistance.value =
+      inputDuration.value =
+      inputCadence.value =
+      inputElevation.value =
+        '';
+
+    // add hiding animation
+    form.computedStyleMap.display = 'none';
+    form.classList.add('hidden');
+    setTimeout(() => (form.style.display = 'grid'), 1000);
+  }
+}
+
+const app = new App();
+console.log('Hour 2 complete!');
